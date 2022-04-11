@@ -973,9 +973,9 @@
         			<div id="chartdiv1"></div>
         		</div>
 
-        		<div class='col-md-5' style='border:1px solid '>
-        			<h5 style='text-align:center;margin:4px'>Yearwise Indicator Trend (Karachi)</h5>
-        			<div id="chartdiv2"></div>
+        		<div class='col-md-5 yearwise_div' style='border:1px solid '>
+        			<h5 id='yearwise_district' style='text-align:center;margin:4px'></h5>
+        			<div id="chartdiv2" style='display:none'></div>
         		</div>
         	</div>
 <br>
@@ -990,39 +990,7 @@
 
 <script>
 $(document).ready(function () {
-// The data
-var data = [
-	{
-		year: "2014-2015",
-		total: 1,
-		urban: 5,
-		rural: 3
-	},
-	{
-		year: "2012-2013",
-		total: 1,
-		urban: 2,
-		rural: 6
-	},
-	{
-		year: "2010-2011",
-		total: 2,
-		urban: 3,
-		rural: 1
-	},
-	{
-		year: "2008-2009",
-		total: 3,
-		urban: 4,
-		rural: 1
-	},
-	{
-		year: "2004-2005",
-		total: 5,
-		urban: 1,
-		rural: 2
-	},
-	];
+
 	
 	
 	$('#idindicator option[value="0814495c-6aa5-11eb-9f2d-cbab7e8ea280"]').attr("selected", "selected");
@@ -1030,7 +998,7 @@ var data = [
 	dynamicMap($('#idindicator').val() , $('#idcampaign').val() );
 	callAjaxRankingDistrict($('#idindicator').val() , $('#idprovince').val() , $('#idcampaign').val() );
 	callProvinceChart($('#idindicator').val() , $('#idcampaign').val() );
-	yearChart(data);
+	
 
 	$("#idindicator").on('change' , function(){
 		callAjaxRankingDistrict($(this).val()  , $('#idprovince').val() , $('#idcampaign').val());
@@ -1074,7 +1042,8 @@ function popOverDistrict(id , title , total , total_urban , total_rural){
 	$("#"+id).popover({
         title: '<h4 class="custom-title"><i class="bi-info-circle-fill"></i> '+title+'</h4>',
         content: '<p>'+message+'</p>',
-        html: true
+        html: true,
+		trigger:'hover'
     });
 }
 
@@ -1183,6 +1152,34 @@ function callProvinceChart(indicator_id,years,district=''){
 	})
 }
 
+function callYearWiseChart(indicator_id,district){
+	var options = $('#idcampaign option');
+	var values = $.map(options, e => $(e).val());
+	values.shift();
+	$.ajax({
+		url : 'http://localhost/phis/main/getYearWiseChart',
+		type : 'POST',
+		data : {'indicator_id':indicator_id , 'years':JSON.stringify(values) ,  'district':district},
+		success:function(data){
+			result = JSON.parse(data);
+			console.log(result);
+			$('#chartdiv2').remove();
+			$('.yearwise_div').append("<div id='chartdiv2'></div>");
+
+			var data = [];
+			for(let i = 0 ; i < result.length ; i++){
+				year_data = {
+					year:result[i]['year'],
+					total:( isNaN(parseInt(result[i]['result'][0]['Total'])) === true) ? 0 : parseInt(result[i]['result'][0]['Total']),
+					urban:( isNaN(parseInt(result[i]['result'][0]['Total_Urban'])) === true) ? 0 : parseInt(result[i]['result'][0]['Total_Urban']),
+					rural:( isNaN(parseInt(result[i]['result'][0]['Total_Rural'])) === true) ? 0 : parseInt(result[i]['result'][0]['Total_Rural']),
+				}
+				data.push(year_data);
+			}
+			yearChart(data);	
+		}
+	})
+}
 
 function rankingDistrictChart(data){
 
@@ -1384,14 +1381,14 @@ function dynamicMap(indicator_id, years){
 			// Islamabad Province
 			html += '<g class="model-green" >';
 			for(let i = 0 ; i < result['Islamabad_province'].length ; i++){
-				html += '<a id="state_'+result['Islamabad_province'][i]['district_name']+'" class="state"><path id="'+result['Islamabad_province'][i]['district_name']+'" data-id="'+result['Islamabad_province'][i]['district_code']+'"  class="shape" d="'+result['Islamabad_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['Islamabad_province'][i]['district_name']+'" class="state"><path id="'+result['Islamabad_province'][i]['district_name']+'" data-id="'+result['Islamabad_province'][i]['district_code']+'" data-total="'+result['Islamabad_province'][i]['total']+'" data-total_urban="'+result['Islamabad_province'][i]['total_urban']+'" data-total_rural="'+result['Islamabad_province'][i]['total_rural']+'"   class="shape" d="'+result['Islamabad_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '</g>';
 
 			// Balochistan Province
 			html += '<g class="model-green" id="Balochistan" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['Balochistan_province'].length ; i++){
-				html += '<a id="state_'+result['Balochistan_province'][i]['district_name']+'" class="state"><path id="'+result['Balochistan_province'][i]['district_name']+'" data-id="'+result['Balochistan_province'][i]['district_code']+'"  class="shape" d="'+result['Balochistan_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['Balochistan_province'][i]['district_name']+'" class="state"><path id="'+result['Balochistan_province'][i]['district_name']+'" data-id="'+result['Balochistan_province'][i]['district_code']+'" data-total="'+result['Balochistan_province'][i]['total']+'" data-total_urban="'+result['Balochistan_province'][i]['total_urban']+'" data-total_rural="'+result['Balochistan_province'][i]['total_rural']+'"   class="shape" d="'+result['Balochistan_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="Balochistan_Border" fill="none" stroke="#a08070" d="m 796.8,635.3 -13.8,7.4 -14.6,0.8 -11.8,-9 -10.4,15.6 -20,12 -15,9.2 -16,-1.6 6,14.8 15.4,-1.6 1.8,8 -42,16 -6.8,-0.6 -24.2,-2.2 -4,-10.8 -28.6,12.8 -4.8,15.8 -12,11.2 -17.2,4.2 -11,42.8 7.4,17 -11.2,42.2 11.8,9.6 -10.6,13.2 -118.8,36.8 -43.4,-5.2 -36.6,6.6 -16.2,17 -51.4,-13 -113.4,11.6 -157.8,-54.4 48.2,60.6 12.8,37.8 31.6,42.2 31.2,17.8 26.4,5.8 21.2,20.6 20,-2.4 -2,29.8 8,53.8 -6.8,36.2 16,4.8 24,-5.6 13.4,11.8 -6.2,6.4 2.6,23.9 -9,3.6 -2.2,22.6 -36.6,-0.6 -53,15 2,19.8 -14.2,-4.2 -2.8,7.6 -28.2,10.4 -7.2,49.2 -8,0.4 2.8,14.6 -10.2,54 16.6,1.4 -4.6,17 10.8,1 1.6,-6.2 24.8,-2 -3.8,-5.4 3.6,-6 11.8,-2 8.6,4.2 -2.4,9.6 10.6,0 -5.2,-5.6 14.6,-7.2 -1.8,-3 27,-2.4 27,5.2 10,-4.4 40.2,7 1.4,-2.4 -5.2,-8.2 10,-8.8 17.6,-2.8 18.2,5.8 14.2,-0.8 -3.6,-8.4 -2.6,3 -3.2,-3.2 6.2,-4 11.4,0.4 -1.8,3 -5.4,2.4 4,8.6 13.4,1.4 17.8,9.6 10.8,-4.6 9,7.2 -3,4 4.4,1.2 6,-1.8 -4.6,-4.6 2.4,-7.4 10.4,-4.6 29.4,1.6 8.6,1.8 7,-9.2 5.8,1 5.2,-3 4,3.2 6.8,-2.2 21.2,4.4 19,-8.6 44.4,-5.8 19,8 1.8,-0.8 -4.8,-6 2.8,-2.6 -4.2,-1.4 -2.4,1.4 -8.4,-8.2 -7.6,1 -5,6.2 -7.8,-2 2.4,-6.4 11.2,-5.2 4.4,1.4 6.2,-3 13.6,13.2 1.6,-1.6 5.6,15.8 -3.4,0.4 2.4,5.4 15.6,15.6 -5,34.4 2.4,0.8 17,-14.6 6.8,-0.6 8,-9.4 0.4,-7.2 10.6,-10.8 3.4,-18.2 20.8,-27.2 7.2,-21.8 0.6,-29.6 -22.8,-39.8 -8,-26.8 -1.4,-73.3 9.6,-29.2 15.8,-33.6 27.6,-6 26,-11.4 10.6,-15.2 32.6,-21.4 11.8,-14.2 66.4,-2.4 25,-0.8 -5,-12 11.2,-6.4 8.6,-20.2 -3.8,-10.8 21,-21.8 4.6,-24 -5.4,3 -4.8,-6.6 2.2,-7 -10.6,-3.4 4.2,-26.8 13.4,-5.4 15.6,-22.8 8.2,-23.8 7.6,-15.2 -9.6,3.8 -3.6,-7 4.2,-17.4 10.6,-20.8 -1,-9.2 12,-13.2 6.2,-0.8 -2.2,-6.2 1.2,-23.4 -2.4,-5 4,-24.8 -1.4,-17 -16.6,8 -5.6,9.8 -2.6,-16.8 -8.6,-5.2 2.4,-43.8 -7.6,5.2 -3,-3.2 3.8,-8.2 -7.2,-4.6 3,-9.6 -16.8,4.6 -10.6,11.6 -21.8,-1 -12.6,10.6 -7.8,16.8 -10,8.8 -7.2,-2.2 -5.2,5 -9.2,-1 -8.8,-9.8 -1.4,-8.6 -6.2,-0.6 z"/>';
 			html += '</g>';
@@ -1399,7 +1396,7 @@ function dynamicMap(indicator_id, years){
 			// Sindh Province
 			html += '<g class="model-green" id="Sindh" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['Sindh_province'].length ; i++){
-				html += '<a id="state_'+result['Sindh_province'][i]['district_name']+'" class="state"><path id="'+result['Sindh_province'][i]['district_name']+'" data-id="'+result['Sindh_province'][i]['district_code']+'" class="shape" d="'+result['Sindh_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['Sindh_province'][i]['district_name']+'" class="state"><path id="'+result['Sindh_province'][i]['district_name']+'" data-id="'+result['Sindh_province'][i]['district_code']+'" data-total="'+result['Sindh_province'][i]['total']+'" data-total_urban="'+result['Sindh_province'][i]['total_urban']+'" data-total_rural="'+result['Sindh_province'][i]['total_rural']+'" class="shape" d="'+result['Sindh_province'][i]['coordinate']+'" /></a>';
 				
 			}
 			html += '<path id="Sindh_Border" fill="none" stroke="#a08070" d="m 911.6,1021.5 -23.6,-6.2 -9.6,4.4 -35,1.2 -56.4,2 -11.8,14.2 -32.6,21.4 -10.6,15.2 -26,11.4 -27.6,6 -15.8,33.6 -9.6,29.2 1.4,73.3 8,26.8 22.8,39.8 -0.6,29.6 -7.2,21.8 -20.8,27.2 -3.4,18.2 -10.6,10.8 -0.4,7.2 -8,9.4 -6.8,0.6 -17,14.6 -5,7.6 20.4,-3.4 9.8,5.8 -0.2,-4.2 12,8.6 0.2,-3.6 10.6,5 5,-2.4 2.2,4.2 -6,3 -5,8 1,4 5.6,-0.4 4,3.2 -6,3.2 3.8,3.8 2.8,12.6 2.8,-2.6 -0.8,9 8.2,1.8 -7.2,3.4 5,25.6 19.8,4 0.2,13.4 -3.8,7.4 11.4,3.2 3.2,-9.4 3,15.6 6.6,-0.4 -2.2,-5.2 11.8,3.6 2,-11.6 16.6,16.6 -1.4,-19.6 5.6,2.4 3.4,12.6 -5,9.6 4.6,2.8 1,-3.8 4.4,5 0.8,-24.2 3.8,14.4 4.6,-14.4 12.8,-9.6 38,2.2 1.4,-36.4 6.2,-3.4 3,12.2 6.8,-10.8 7,8.2 9.8,-5 10.8,3.8 11,-4.8 13.2,0.8 14.8,-1.8 13.4,12.8 30,0.6 8.6,-13.2 26,-8 20.4,-7.6 2,3.4 -3.2,3.8 1.2,12 10,3.4 13.2,0.2 9.8,-5 -3.8,-3.8 11.4,-7.4 3.4,1.2 11,-6.6 -10.4,-2.8 -3,-19.4 9.6,-10.4 -14,-26.4 -7,-26.4 -21,-28 0.6,-31.6 -6,-5.4 -20.2,4.2 -13.4,-3.6 -6.6,-9.6 -10.8,-15.8 -2.2,-14.4 9.2,-21.6 -0.4,-35 -10.2,-5.6 -18.6,2 -39,-21 2.2,-28.7 7.4,-18.8 23.8,-24.6 20,-20.6 8.4,-22.6 9.8,-13.4 -18,-8.4 -13,-17.8 -6.2,-24.6 z"/>';
@@ -1408,7 +1405,7 @@ function dynamicMap(indicator_id, years){
 			// Punjab Province
 			html += '<g class="model-green" id="Punjab" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['Punjab_province'].length ; i++){
-				html += '<a id="state_'+result['Punjab_province'][i]['district_name']+'" class="state"><path  id="'+result['Punjab_province'][i]['district_name']+'" data-id="'+result['Punjab_province'][i]['district_code']+'"  class="shape" d="'+result['Punjab_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['Punjab_province'][i]['district_name']+'" class="state"><path  id="'+result['Punjab_province'][i]['district_name']+'" data-id="'+result['Punjab_province'][i]['district_code']+'" data-total="'+result['Punjab_province'][i]['total']+'" data-total_urban="'+result['Punjab_province'][i]['total_urban']+'" data-total_rural="'+result['Punjab_province'][i]['total_rural']+'"  class="shape" d="'+result['Punjab_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="Punjab_Border" fill="none" stroke="#a08070" d="m 1303,439.9 -6.2,-11.2 3,-8.6 -8.6,-35.9 -13.2,6 -4.6,9.3 -16.6,9.2 10.6,7.8 2.8,-0.2 3.2,4.2 -7.8,7.8 -1.6,9 -11.2,7.2 -6,-4.8 3.8,-3 -6.8,-10.2 -18,8.8 -6.4,-13.8 11.8,-3.6 -10.8,-4.2 5.2,-4.8 -2.6,-8.9 -8.6,-5.8 -7,7.3 -7.2,-2.5 2.6,-5.4 -17.2,-9.4 -20.4,9.4 0,18.7 -21,2.2 -7.8,25.2 -9.2,14 -14,6.4 -2.4,9.4 5.6,10.4 -4.2,12.8 -10.8,-4.6 -4.8,-12.6 -18.4,-2.2 6.2,18.4 -2.2,7.4 -15.2,1.6 -12.8,8 -3.6,19.6 6.4,19 7.6,0 -0.2,10.6 9.6,-3.6 -0.6,18.8 -10,3.8 -11,21.8 -9.8,30.6 -15.8,23.2 -4.4,16.6 6,1 -4.4,14.8 -7.6,14.4 -7.2,-6 -13.6,-1.6 -16.6,13.8 -13.4,6.4 0.6,10 -3,0.4 -1.2,23.4 2.2,6.2 -6.2,0.8 -12,13.2 1,9.2 -10.6,20.8 -4.2,17.4 3.6,7 9.6,-3.8 -7.6,15.2 -8.2,23.8 -15.6,22.8 -13.4,5.4 -4.2,26.8 10.6,3.4 -2.2,7 4.8,6.6 5.4,-3 -4.6,24 -21,21.8 3.8,10.8 -8.6,20.2 -11.2,6.4 5,12 9.6,-4.4 23.6,6.2 11.6,16.8 6.2,24.6 13,17.8 18,8.4 16,-14.4 19.6,-1.2 11,12 3.2,13.2 5.4,9.6 12.8,1.2 35.8,-16.4 50.2,-7 15.4,-6.2 2.2,-17.4 26.2,-28 11.8,-35.2 9.4,-12.8 20.8,-11.6 34.6,-19.6 30.8,-55.2 13.8,-47.4 40.8,-15.2 16.2,-13.8 -2.2,-13.2 -6.8,-6.4 5.6,-11.2 10.8,-8.8 3.8,1.6 2.2,-10 13.2,-12.8 13.4,-19.2 18.2,-12.2 0.6,-8.2 8.6,4.8 4.8,-5 -2.4,-4.8 -11.8,-3 0.4,-18.6 9,-19.6 -12.4,-34 19.4,-22.8 9.2,1.4 13,-13 6.6,3.6 21.4,-10.4 2.2,4 14.8,-20.4 -7,-9.6 -12.4,-9.2 -6,0.4 -7.8,-8.2 -7.8,5.2 -7.4,-2.8 -8,-2.8 -12,1.2 -6.4,-12.4 1.6,-14.4 4.8,-14 -16.6,11.4 -8.4,-9.2 -12.8,0.4 -30.8,-15 -9,-10 -11.6,3 -17.6,-9.8 3.2,-7.2 -2.6,-7 -6.6,-17.8 z"/>';
 			html += '</g>';
@@ -1416,7 +1413,7 @@ function dynamicMap(indicator_id, years){
 			// Khyber Pakhtunkhwa Province
 			html += '<g class="model-green" id="Khyber Pakhtunkhwa" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['KPK_province'].length ; i++){
-				html += '<a id="state_'+result['KPK_province'][i]['district_name']+'" class="state"><path id="'+result['KPK_province'][i]['district_name']+'" data-id="'+result['KPK_province'][i]['district_code']+'"  class="shape" d="'+result['KPK_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['KPK_province'][i]['district_name']+'" class="state"><path id="'+result['KPK_province'][i]['district_name']+'" data-id="'+result['KPK_province'][i]['district_code']+'" data-total="'+result['KPK_province'][i]['total']+'" data-total_urban="'+result['KPK_province'][i]['total_urban']+'" data-total_rural="'+result['KPK_province'][i]['total_rural']+'" class="shape" d="'+result['KPK_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="Khyber_Pakhtunkhwah_Border" fill="none" stroke="#a08070" d="m 1244.6,78 32.4,-8.6 21.4,4.8 26.2,0 0.6,-9 -12.8,-5.4 -8.4,-8.2 -28.6,2.6 -21.2,-1.6 -11.8,4 -5.8,-1.6 -4.4,3.2 -28.6,-0.4 -14.2,8.2 -25.4,2.8 -4.6,7 1.8,3.2 -11.2,2 -0.6,5.8 -16,4.2 -2.8,6.4 -7.6,0 -1.4,7.2 4.4,1.6 -1.8,5.2 -19.6,-11.4 -8.6,12.2 -0.2,5.8 -31.4,23.4 -4.4,10 17.4,9.4 9.2,13.6 1.2,8.4 6.6,4.8 -4.6,10.8 11.2,6.2 -1.8,8.6 5.4,5.2 -9.4,18 12,11.6 -13.8,12.2 1.8,8 -5.4,6.4 10,17 15.6,4.2 -0.4,13.6 -8.6,5 -3.8,10 5,8.8 -21.8,29.4 -9.8,13 5,25.9 8,4.6 0.2,9 9.4,3 10.6,-3.8 4.2,-7.2 10.2,6.8 1.4,4.2 -5,5 2,6 -13.8,11.2 -8,0.8 -3,-5.4 4.2,-4.8 -18.4,-3.6 -10.2,1.8 -16.6,-11.6 -6,0.6 -2.4,15.8 -16.6,3 -17,-2.8 -3.2,10 -23.4,8.2 14,17 10.8,4.2 13.2,5.2 -15.8,16.4 -17.2,-0.8 -16.2,27 2.6,15 7.4,8 12,13.2 -2.6,6.2 -10,-6 -9.4,14.4 -30.2,21 5,21.4 6.8,3.4 2.6,27.2 18.4,60.4 16.6,-13.8 13.6,1.6 7.2,6 7.6,-14.4 4.4,-14.8 -6,-1 4.4,-16.6 15.8,-23.2 9.8,-30.6 11,-21.8 10,-3.8 0.6,-18.8 -9.6,3.6 0.2,-10.6 -7.6,0 -6.4,-19 3.6,-19.6 12.8,-8 15.2,-1.6 2.2,-7.4 -6.2,-18.4 18.4,2.2 4.8,12.6 10.8,4.6 4.2,-12.8 -5.6,-10.4 2.4,-9.4 14,-6.4 9.2,-14 7.8,-25.2 21,-2.2 0,-18.7 20.4,-9.4 17.2,9.4 -2.6,5.4 7.2,2.5 7,-7.3 8.6,5.8 2.6,8.9 -5.2,4.8 10.8,4.2 25.6,-9.2 16.6,-9.2 4.6,-9.3 13.2,-6 -11.4,-44.6 3.6,-10.8 3,-9 16.6,1 9,-23.4 25.4,-11 11.4,-18.6 -2.8,-4.2 6.6,-7.4 -21.2,-9.4 -18.6,-1.6 -3,-11.2 1.4,-11.4 9.4,-10 -53,-13 -16,-14 0.6,-11.6 -4.8,-3 -9.8,3.6 -15.2,-2.6 -15.4,4.4 -15.8,-9.4 5.2,-12.4 -4.4,-7.4 2.6,-17.4 30.8,-18.4 2.8,-8.6 7.4,-1.4 11.6,-15.6 z"/>';
 			html += '</g>';
@@ -1425,7 +1422,7 @@ function dynamicMap(indicator_id, years){
 			// FATA Province
 			html += '<g class="model-green" id="Khyber Pakhtunkhwa" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['FATA_province'].length ; i++){
-				html += '<a id="state_'+result['FATA_province'][i]['district_name']+'" class="state"><path id="'+result['FATA_province'][i]['district_name']+'" data-id="'+result['FATA_province'][i]['district_code']+'"  class="shape" d="'+result['FATA_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['FATA_province'][i]['district_name']+'"  class="state"><path id="'+result['FATA_province'][i]['district_name']+'" data-id="'+result['FATA_province'][i]['district_code']+'" data-total="'+result['FATA_province'][i]['total']+'" data-total_urban="'+result['FATA_province'][i]['total_urban']+'" data-total_rural="'+result['FATA_province'][i]['total_rural']+'"  class="shape" d="'+result['FATA_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="FATA_Border" fill="none" stroke="#a08070" d="m 1040.2,320.4 0.2,12.2 7.2,7.4 9.2,3.8 -4.8,12.4 0.4,10.6 -6,12.8 -29.8,11.2 -37.6,0.2 -15.4,-2.4 -22.6,-8.6 -11.4,2.4 -3.8,9.9 14.6,23.8 11.8,1.4 6.6,9.4 -1.6,13.2 11.4,10.8 3.8,10.4 -17,13.8 -8.8,0.8 -4.6,8.2 -14.6,5.4 -9,-3.6 -6.4,3.8 -14.2,-0.4 -7.2,7.8 -1.6,10 4.2,8.6 -7,2.4 -7.2,9.8 5.8,11.4 -6.4,11 -10,4 -4.8,10.2 4.8,11 -0.8,27.6 4.6,19.2 21.8,1 10.6,-11.6 16.8,-4.6 -3,9.6 7.2,4.6 -3.8,8.2 3,3.2 7.6,-5.2 -2.4,43.8 8.6,5.2 2.6,16.8 5.6,-9.8 16.6,-8 1.4,17 -4,24.8 2.4,5 3,-0.4 -0.6,-10 13.4,-6.4 -18.4,-60.4 -2.6,-27.2 -6.8,-3.4 -5,-21.4 30.2,-21 9.4,-14.4 10,6 2.6,-6.2 -12,-13.2 -7.4,-8 -2.6,-15 16.2,-27 17.2,0.8 15.8,-16.4 -13.2,-5.2 -10.8,-4.2 -4.8,-5.8 -9.2,-11.2 23.4,-8.2 3.2,-10 17,2.8 16.6,-3 2.4,-15.8 6,-0.6 16.6,11.6 10.2,-1.8 18.4,3.6 -4.2,4.8 3,5.4 8,-0.8 13.8,-11.2 -2,-6 5,-5 -1.4,-4.2 -10.2,-6.8 -4.2,7.2 -10.6,3.8 -9.4,-3 -0.2,-9 -8,-4.6 -5,-25.9 9.8,-13 21.8,-29.4 -5,-8.8 3.8,-10 8.6,-5 0.4,-13.6 -15.6,-4.2 -10,-17 -18.8,10.2 -9.4,14.8 -10.4,4.2 -2.8,13.8 z"/>';
 			html += '</g>';
@@ -1433,7 +1430,7 @@ function dynamicMap(indicator_id, years){
 			// Azad Jammu And Kashmir Province
 			html += '<g class="model-green" id="AJK" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['AJK_province'].length ; i++){
-				html += '<a id="state_'+result['AJK_province'][i]['district_name']+'" class="state"><path id="'+result['AJK_province'][i]['district_name']+'" data-id="'+result['AJK_province'][i]['district_code']+'"  class="shape" d="'+result['AJK_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['AJK_province'][i]['district_name']+'" class="state"><path id="'+result['AJK_province'][i]['district_name']+'" data-id="'+result['AJK_province'][i]['district_code']+'" data-total="'+result['AJK_province'][i]['total']+'" data-total_urban="'+result['AJK_province'][i]['total_urban']+'" data-total_rural="'+result['AJK_province'][i]['total_rural']+'"  class="shape" d="'+result['AJK_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="AJK_Border" fill="none" stroke="#a08070" d="m 1296.8,457.7 6.6,17.8 2.6,7 -3.2,7.2 17.6,9.8 11.6,-3 9,10 30.8,15 12.8,-0.4 -3.8,-10 -10.2,-2.4 2.8,-11.4 -14,-2.8 -19.4,-22.4 15.8,-12.4 1.6,-14 -9.8,-12.2 -6,0 -7.2,-16.8 11.2,-11.6 10.2,-2.1 9.2,-9.8 -4.6,-13 -33.2,-1.4 9.8,-21.2 -8.2,-14.4 -5.8,2.4 -6.8,-1.2 0.4,-7.6 12,-9.2 -0.2,-5.8 5.2,-3.2 1.2,-14 19,0 15.8,-12 27.2,3.4 9.2,8 23.2,2 11.6,4.8 20.6,-0.8 4.4,-6.8 -2.6,-11.4 -10.2,-9.8 -5.6,8.6 -5.6,-2.6 -7,6.4 -33.8,-15.2 -4,-16 -9.2,-9.8 -24.6,8.4 -10.6,-5.6 -6.6,7.4 2.8,4.2 -11.4,18.6 -25.4,11 -9,23.4 -16.6,-1 -3,9 -3.6,10.8 11.4,44.6 8.6,35.9 -3,8.6 6.2,11.2 z"/>';
 			html += '</g>';
@@ -1441,7 +1438,7 @@ function dynamicMap(indicator_id, years){
 			// Gilgit Baltistan Province
 			html += '<g class="model-green" id="Gilgit-Baltistan" fill="#ffffd0" stroke="#d0c0a0" transform="translate(-27.1,-28.1)">';
 			for(let i = 0 ; i < result['GB_province'].length ; i++){
-				html += '<a id="state_'+result['GB_province'][i]['district_name']+'" class="state"><path id="'+result['GB_province'][i]['district_name']+'" data-id="'+result['GB_province'][i]['district_code']+'"  class="shape" d="'+result['GB_province'][i]['coordinate']+'" /></a>';
+				html += '<a id="state_'+result['GB_province'][i]['district_name']+'" class="state"><path id="'+result['GB_province'][i]['district_name']+'" data-id="'+result['GB_province'][i]['district_code']+'" data-total="'+result['GB_province'][i]['total']+'" data-total_urban="'+result['GB_province'][i]['total_urban']+'" data-total_rural="'+result['GB_province'][i]['total_rural']+'"  class="shape" d="'+result['GB_province'][i]['coordinate']+'" /></a>';
 			}
 			html += '<path id="Gilgit_Baltistan_Border" fill="none" stroke="#a08070" d="m 1530.6,83.2 -18.8,-14.6 -18.4,-2.2 -1.4,5 -7.8,0.2 -6.4,-21.8 1.4,-3.6 -23.8,-5.4 -1.8,-3.6 -11.8,0.8 -10.8,9 -7.2,-6.4 -2.2,-8.4 -7.8,4.8 -6.6,-8.4 -7.2,1.4 -4,5.6 -0.8,8 -4.6,-4 -9.8,0.4 -16.6,10.8 -10.2,-1 -2.4,7.2 -7.4,2.2 -9,-1 -12,-7 -19.2,0.4 8.4,8.2 12.8,5.4 -0.6,9 -26.2,0 -21.4,-4.8 -32.4,8.6 2.6,7.8 -11.6,15.6 -7.4,1.4 -2.8,8.6 -30.8,18.4 -2.6,17.4 4.4,7.4 -5.2,12.4 15.8,9.4 15.4,-4.4 15.2,2.6 9.8,-3.4 4.8,2.8 -0.6,11.6 16,14 53,13 -9.4,10 -1.4,11.4 3,11.2 18.6,1.6 21.2,9.4 10.6,5.6 24.6,-8.4 9.2,9.8 4,16 33.8,15.2 7,-6.4 5.6,2.6 5.6,-8.6 10.2,9.8 2.6,11.4 -4.4,6.8 17,11.4 35.4,3.8 30,-18.2 9,3.6 33.4,-17.4 8.8,4.2 12.6,-0.6 6.8,-19.2 24.2,-1 1.6,-11 14.4,-2.4 -17.2,-31.8 -22,-25.6 -0.2,-13.4 -8.8,-9.2 -8,-4 -0.8,-13.8 -3.2,-1.4 -17,5.8 -4.8,3.8 -16.2,0 -1.6,-11.2 -6.8,-9.6 -9,-0.4 -5.6,-5.8 -0.8,-7.6 8.2,-3.6 -1.8,-5.8 5.2,-0.6 -7,-13.4 2.6,-12 -8,-13.4 z"/>';
 			html += '</g>';
@@ -1459,59 +1456,75 @@ function dynamicMap(indicator_id, years){
 			// attaching events
 			
 			for(let a = 0 ; a < result['Islamabad_province'].length ; a++){
+				popOverDistrict(result['Islamabad_province'][a]['district_name'] , result['Islamabad_province'][a]['district_name'] , result['Islamabad_province'][a]['total'] , result['Islamabad_province'][a]['total_urban'] , result['Islamabad_province'][a]['total_rural']);
 				$('#'+result['Islamabad_province'][a]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					// popOverDistrict(result['Islamabad_province'][a]['district_name'] , result['Islamabad_province'][a]['district_name'] , result['Islamabad_province'][a]['total'] , result['Islamabad_province'][a]['total_urban'] , result['Islamabad_province'][a]['total_rural'])
-					
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let b = 0 ; b < result['Balochistan_province'].length ; b++){
+				popOverDistrict(result['Balochistan_province'][b]['district_name'] , result['Balochistan_province'][b]['district_name'] , result['Balochistan_province'][b]['total'] , result['Balochistan_province'][b]['total_urban'] , result['Balochistan_province'][b]['total_rural']);
 				$('#'+result['Balochistan_province'][b]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					// popOverDistrict(result['Balochistan_province'][b]['district_name'] , result['Balochistan_province'][b]['district_name'] , result['Balochistan_province'][b]['total'] , result['Balochistan_province'][b]['total_urban'] , result['Balochistan_province'][b]['total_rural'])
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
+					
 				});
 			}
 
 			for(let c = 0 ; c < result['Sindh_province'].length ; c++){
+				popOverDistrict(result['Sindh_province'][c]['district_name'] , result['Sindh_province'][c]['district_name'] , result['Sindh_province'][c]['total'] , result['Sindh_province'][c]['total_urban'] , result['Sindh_province'][c]['total_rural']);
 				$('#'+result['Sindh_province'][c]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['Sindh_province'][c]['district_name'] , result['Sindh_province'][c]['district_name'] , result['Sindh_province'][c]['total'] , result['Sindh_province'][c]['total_urban'] , result['Sindh_province'][c]['total_rural'])
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let d = 0 ; d < result['Punjab_province'].length ; d++){
+				popOverDistrict(result['Punjab_province'][d]['district_name'] , result['Punjab_province'][d]['district_name'] , result['Punjab_province'][d]['total'] , result['Punjab_province'][d]['total_urban'] , result['Punjab_province'][d]['total_rural']);
 				$('#'+result['Punjab_province'][d]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['Punjab_province'][d]['district_name'] , result['Punjab_province'][d]['district_name'] , result['Punjab_province'][d]['total'] , result['Punjab_province'][d]['total_urban'] , result['Punjab_province'][d]['total_rural'])
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let e = 0 ; e < result['KPK_province'].length ; e++){
+				popOverDistrict(result['KPK_province'][e]['district_name'] , result['KPK_province'][e]['district_name'] , result['KPK_province'][e]['total'] , result['KPK_province'][e]['total_urban'] , result['KPK_province'][e]['total_rural']);
 				$('#'+result['KPK_province'][e]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['KPK_province'][e]['district_name'] , result['KPK_province'][e]['district_name'] , result['KPK_province'][e]['total'] , result['KPK_province'][e]['total_urban'] , result['KPK_province'][e]['total_rural'])
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let f = 0 ; f < result['FATA_province'].length ; f++){
+				popOverDistrict(result['FATA_province'][f]['district_name'] , result['FATA_province'][f]['district_name'] , result['FATA_province'][f]['total'] , result['FATA_province'][f]['total_urban'] , result['FATA_province'][f]['total_rural']);
 				$('#'+result['FATA_province'][f]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['FATA_province'][f]['district_name'] , result['FATA_province'][f]['district_name'] , result['FATA_province'][f]['total'] , result['FATA_province'][f]['total_urban'] , result['FATA_province'][f]['total_rural']);
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let g = 0 ; g < result['AJK_province'].length ; g++){
+				popOverDistrict(result['AJK_province'][g]['district_name'] , result['AJK_province'][g]['district_name'] , result['AJK_province'][g]['total'] , result['AJK_province'][g]['total_urban'] , result['AJK_province'][g]['total_rural']);
 				$('#'+result['AJK_province'][g]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['AJK_province'][g]['district_name'] , result['AJK_province'][g]['district_name'] , result['AJK_province'][g]['total'] , result['AJK_province'][g]['total_urban'] , result['AJK_province'][g]['total_rural']);
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 
 			for(let h = 0 ; h < result['GB_province'].length ; h++){
+				popOverDistrict(result['GB_province'][h]['district_name'] , result['GB_province'][h]['district_name'] , result['GB_province'][h]['total'] , result['GB_province'][h]['total_urban'] , result['GB_province'][h]['total_rural']);
 				$('#'+result['GB_province'][h]['district_name']).on('click' , function(){
 					callProvinceChart($('#idindicator').val() , $('#idcampaign').val() , parseInt($(this).data('id')) );
-					popOverDistrict(result['GB_province'][h]['district_name'] , result['GB_province'][h]['district_name'] , result['GB_province'][h]['total'] , result['GB_province'][h]['total_urban'] , result['GB_province'][h]['total_rural']);
+					$('#yearwise_district').text('Yearwise Trend Indicator (' + $(this).attr('id') + ')');
+					callYearWiseChart($('#idindicator').val() , parseInt($(this).data('id')));
 				});
 			}
 		}

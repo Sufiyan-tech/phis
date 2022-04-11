@@ -233,6 +233,33 @@ class Main extends CI_Controller {
 		
 	}
 
+	public function getYearWiseChart(){
+		$this->load->model('surveymodel');
+			
+		$data = array();
+
+		foreach(json_decode($this->input->post('years')) as $year){
+			$year_where = '';
+			
+			if($year != ''){
+				$from_year = substr($year , 0 , 4);
+				$to_year = substr($year , 5 , 9);
+				$year_where = "and (dhis_data2.year >= ".$from_year." and dhis_data2.year <= ".$to_year." )";
+			}
+
+			$year_data = array(
+				'year' => $year,
+				'result' => $this->surveymodel->generalQuery('select sum(dhis_data2.total_count) as Total , (sum(dhis_data2.rmale)+sum(dhis_data2.rfemale)) as Total_Rural , (sum(dhis_data2.umale)+sum(dhis_data2.ufemale)) as Total_Urban from dhis_data2 where distcode = "'.$this->input->post('district').'" and indicator_id = "'.$this->input->post('indicator_id').'" '.$year_where.'')
+			);
+
+			array_push($data,$year_data);	
+		}
+
+		echo json_encode($data);
+
+		
+	}
+
 
 	public function get_ind_by_subcomponent(){
 		$subcompobj = $this->input->post('subcompobj');
